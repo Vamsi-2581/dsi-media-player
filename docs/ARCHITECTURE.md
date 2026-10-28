@@ -59,13 +59,16 @@ the heap around 3 MB. Moving the user stack top to `0x02F00000` and setting
 main RAM or lets the heap run into the stack, which manifests as corruption
 far away from the actual cause.
 
-Largest static allocations, all in `.main.bss` (~1.2 MB total):
+Largest static allocations, all in `.main.bss` (1,253,960 bytes ≈ 1.2 MB —
+check with `arm-none-eabi-size -A arm9/dsi-media-player.elf`):
 
 | Buffer | Size | Where |
 |--------|------|-------|
 | `Library` struct | 468 KB | `library.c` — 1024 × 464-byte `LibEntry` + view pointers |
 | Audio ring buffer | 256 KB | `audio_stream.c` — 65536 stereo frames |
+| Album tile cache | 96 KB | `ui_bottom.c` — 12 × 64×64 RGB555 thumbnails |
 | Bottom back buffer | 96 KB | `ui_draw.c` — 256×192×2 bytes |
+| Scan directory list | 64 KB | `library.c` — 256 × 256-byte paths |
 | Cover art (playback + preview) | 16 KB | `cover_art.c` — two 64×64 RGB555 thumbnails |
 
 These are static on purpose. Fragmenting the heap with large long-lived
@@ -267,13 +270,25 @@ at a negative offset and let clipping handle it.
 
 `ui_top.c`. A 512-point radix-2 DIT FFT in Q14 fixed point, with a Hann
 window, feeding 16 log-spaced bands with attack/decay smoothing and peak
-hold. Tables (`fftSinQ`, `fftWindow`, `bandEdge`) are precomputed at
-compile time.
+hold. The tables (`fftSinQ`, `fftWindow`, `bandEdge`) are hand-written
+literals in `ui_top.c` — there is **no generator script**, so changing the
+FFT size currently means regenerating 512 Hann coefficients by hand. Adding
+a `tools/gen_fft_tables.py` is tracked work.
 
-Band magnitudes are right-shifted before the log step to keep the upper
-bands off the ceiling. If you change the FFT size or the window, expect to
-retune that shift and the log divisor together — they jointly set how much
-of the bar height a given signal level occupies.
+`re` and `im` are right-shifted (`>> 7`) **before squaring**, which sets the
+noise floor; the log divisor (`/ 14`) sets how many octaves map to full bar
+height. The two are a coupled pair — change one and you must retune the
+other.
+
+Two known defects in this path:
+
+- **The butterfly has no per-stage scaling** (`ui_top.c:403-409`), so
+  magnitudes can grow by ~2⁹ across the nine stages. `re * re + im * im` is
+  then computed in `s32`, which can overflow on loud transients and wrap a
+  band to near-zero.
+- `isqrt32()` runs eight Newton iterations, each with a *software* 32-bit
+  divide, ~1850 times per FFT. The DS has a **hardware square root unit** —
+  libnds exposes it as `sqrt32()` in `nds/arm9/math.h`.
 
 ## Music library
 
