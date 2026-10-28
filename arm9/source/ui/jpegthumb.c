@@ -107,12 +107,14 @@ static void buildHuff(HuffTab *h, const u8 *counts, const u8 *symbols) {
         h->valptr[len] = si;
         int n = counts[len - 1];
         for (int i = 0; i < n; i++) {
+            if (si >= 256) return;          /* malformed table — stop */
             u8 sym = *symbols++;
             h->sym[si] = sym;
             /* Populate fast lookup for codes <= 8 bits */
             if (len <= 8) {
                 int prefix = code << (8 - len);
                 int fill = 1 << (8 - len);
+                if (prefix + fill > 256) return;   /* code space overflowed */
                 for (int f = 0; f < fill; f++)
                     h->fast[prefix + f] = (u16)((len << 8) | sym);
             }
@@ -273,6 +275,10 @@ static bool parseMarkers(JpegCtx *ctx, const u8 *data, u32 len, u32 *scanStart) 
                 ctx->comp[i].hSamp = (samp >> 4) & 0x0F;
                 ctx->comp[i].vSamp = samp & 0x0F;
                 ctx->comp[i].qtab = seg[6 + i * 3 + 2];
+                /* qtab indexes qtab[4][64]; DQT validates its own ids but
+                   SOF is a separate segment and can name any of 0-255. */
+                if (ctx->comp[i].qtab > 3) return false;
+                if (ctx->comp[i].hSamp == 0 || ctx->comp[i].vSamp == 0) return false;
                 if (ctx->comp[i].hSamp > (u8)ctx->maxH) ctx->maxH = ctx->comp[i].hSamp;
                 if (ctx->comp[i].vSamp > (u8)ctx->maxV) ctx->maxV = ctx->comp[i].vSamp;
             }
@@ -295,6 +301,10 @@ static bool parseMarkers(JpegCtx *ctx, const u8 *data, u32 len, u32 *scanStart) 
                     total += counts[i];
                 }
                 if (p + (u32)total > segLen) return false;
+                /* h->sym is u8[256]. The check above only proves the symbol
+                   bytes are present in the file, not that they fit the
+                   table — counts are 16 bytes so total can reach 4080. */
+                if (total > 256) return false;
                 HuffTab *h = cls ? &ctx->acHuff[id] : &ctx->dcHuff[id];
                 buildHuff(h, counts, seg + p);
                 p += total;
@@ -335,6 +345,10 @@ static bool parseMarkers(JpegCtx *ctx, const u8 *data, u32 len, u32 *scanStart) 
                 int ci = ctx->scanOrder[i];
                 ctx->comp[ci].dcTab = (tabs >> 4) & 0x0F;
                 ctx->comp[ci].acTab = tabs & 0x0F;
+                /* These index dcHuff[2]/acHuff[2]. DHT rejects ids above 1,
+                   but SOS can still name 0-15. */
+                if (ctx->comp[ci].dcTab > 1 || ctx->comp[ci].acTab > 1)
+                    return false;
             }
             int ssOff = 1 + ns * 2;
             ctx->spectralEnd = seg[ssOff + 1];  /* Se */
