@@ -28,7 +28,11 @@ TWiLight Menu++ or any homebrew launcher.
 - **Sleep timer** — Off / 15 / 30 / 45 / 60 / 90 / 120 minutes
 - **Gapless-ish playback**, repeat (off / one / all), shuffle, and a
   touch-draggable seek bar
-- Persistent settings, and audio keeps playing while the library scans
+- **Plays with the lid closed** — automatic sleep is disabled and both
+  backlights switch off on hinge close, so it works as a pocket player
+- Persistent settings and resume-on-launch, restoring your queue and
+  playback position
+- Audio keeps playing while the library tag-scans
 
 ## Supported Formats
 

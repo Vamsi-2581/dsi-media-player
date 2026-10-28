@@ -35,8 +35,9 @@ First release. [Download](https://github.com/charlesmach/dsi-media-player/releas
   artists, album view matches albums, otherwise track titles
 - Multi-artist tags (`"A; B"`) display as the first artist only, while
   still matching under both
-- Scanning is incremental and driven from the main loop, so audio keeps
-  playing while the card is indexed
+- Tag scanning is incremental and driven from the main loop, so audio keeps
+  playing while files are indexed (the initial directory enumeration is
+  still a blocking walk — see `docs/ARCHITECTURE.md`)
 
 ### Cover art
 
@@ -64,7 +65,9 @@ First release. [Download](https://github.com/charlesmach/dsi-media-player/releas
 - Five selectable accent colour themes
 - Metadata preview on hover, with no audio interruption
 - Japanese text rendering via an embedded 8×8 bitmap font
-- Persistent settings (volume, repeat, shuffle, theme, last directory)
+- Persistent settings (volume, repeat, shuffle, last directory) and
+  resume-on-launch, which restores the previous queue and playback position
+  (theme and the album-tiles toggle are not yet persisted)
 
 ### Fixed
 

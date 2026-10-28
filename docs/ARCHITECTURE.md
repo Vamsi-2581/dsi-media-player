@@ -106,9 +106,21 @@ which hands roughly half the CPU back to audio decode. Odd frames do
 incremental library scanning instead. Lifting this to 60 fps will cause
 underruns on FLAC.
 
-Library scanning is explicitly stepwise (`libraryScanStep`,
-`libraryPreCacheStep`) rather than a blocking loop, so that audio keeps
-playing while the SD card is being indexed.
+Library scanning is mostly stepwise (`libraryScanStep`,
+`libraryPreCacheStep`) rather than a blocking loop, so audio keeps playing
+while files are being tag-parsed.
+
+**One phase is not stepwise.** `collectDirs()` (`library.c:167`) is called
+synchronously from `libraryScanStart()` and walks the entire directory tree
+in one go, with a `stat()` per entry. On a full card that blocks the main
+loop — and therefore `playerUpdate()` — long enough to drain the ring
+buffer. Converting it to a step function is tracked work; until then, the
+"audio keeps playing" guarantee holds for the file-scanning phase but not
+for the initial directory enumeration.
+
+`SCAN_DIR_MAX` (256 directories) and `LIB_MAX_ENTRIES` (1024 tracks) are
+also silent truncation points — a larger collection is quietly cut off
+rather than reported.
 
 ## Audio pipeline
 
@@ -328,15 +340,27 @@ on-screen overlay.
 
 Without that `mcuIrqSet` call the volume buttons appear to do nothing.
 
+It also handles the lid. `pmSetSleepAllowed(false)` disables the automatic
+sleep that would otherwise halt playback when the hinge closes, and on each
+hinge transition it toggles `PMIC_CTRL_LCD_BL_TOP` / `_BOTTOM` through the
+PMIC to kill both backlights. That combination is what makes the device
+usable as a pocket player with the lid shut.
+
 ## Persistence
 
 | Path | Contents |
 |------|----------|
-| `/data/dsiplayer.cfg` | volume, repeat, shuffle, theme, last directory |
+| `/data/dsiplayer.cfg` | volume, repeat, shuffle, last path/directory, resume position |
+| `/data/dsiplayer_resume.m3u` | queue snapshot for resume-on-launch |
 | `/data/dsiplayer_library.dat` | cached library index |
 | `/data/artcache/*.thm` | 64×64 cover art thumbnails |
 
 Settings are written periodically from the main loop
-(`SETTINGS_SAVE_INTERVAL`) rather than on every change, to avoid hammering
-the SD card. Power loss can therefore lose the last few seconds of
-preference changes, which is an accepted tradeoff.
+(`SETTINGS_SAVE_INTERVAL`, every 300 frames) rather than on every change, to
+avoid hammering the SD card. Power loss can therefore lose the last few
+seconds of preference changes, which is an accepted tradeoff.
+
+**Not currently persisted:** the selected theme and the album-tiles toggle
+are file-statics in `ui_bottom.c` (`currentTheme`, `showAlbumTiles`) with no
+corresponding field in `Settings`, so both reset on every launch. Adding
+them is a small, self-contained change.
