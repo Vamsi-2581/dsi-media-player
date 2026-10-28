@@ -1,5 +1,6 @@
 #include "settings.h"
 #include "audio/audio_stream.h"
+#include "ui/ui.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -19,6 +20,8 @@ void settingsLoad(Settings *s) {
     s->volume = 127;
     s->repeat = REPEAT_OFF;
     s->shuffle = false;
+    s->theme = THEME_BLUE;
+    s->showAlbumTiles = true;
     s->lastPath[0] = '\0';
     strcpy(s->lastDir, "/");
     s->resumePositionMs = 0;
@@ -49,6 +52,11 @@ void settingsLoad(Settings *s) {
             else s->repeat = REPEAT_OFF;
         } else if (strcmp(key, "shuffle") == 0) {
             s->shuffle = (strcmp(val, "1") == 0);
+        } else if (strcmp(key, "theme") == 0) {
+            int theme = parseUint(val);
+            if (theme < THEME_COUNT) s->theme = (u8)theme;
+        } else if (strcmp(key, "albumtiles") == 0) {
+            s->showAlbumTiles = (strcmp(val, "1") == 0);
         } else if (strcmp(key, "lastpath") == 0) {
             strncpy(s->lastPath, val, sizeof(s->lastPath) - 1);
         } else if (strcmp(key, "lastdir") == 0) {
@@ -72,6 +80,8 @@ void settingsSave(const Settings *s) {
             s->repeat == REPEAT_ALL ? "all" :
             s->repeat == REPEAT_ONE ? "one" : "off");
     fprintf(f, "shuffle=%d\n", s->shuffle ? 1 : 0);
+    fprintf(f, "theme=%u\n", s->theme);
+    fprintf(f, "albumtiles=%d\n", s->showAlbumTiles ? 1 : 0);
     if (s->lastPath[0])
         fprintf(f, "lastpath=%s\n", s->lastPath);
     if (s->lastDir[0])
@@ -84,12 +94,16 @@ void settingsSave(const Settings *s) {
 }
 
 void settingsApply(const Settings *s) {
+    uiSetTheme((ThemeColor)s->theme);
+    uiSetAlbumTiles(s->showAlbumTiles);
     playerSetVolume(s->volume);
     while (playerGetRepeat() != s->repeat) playerCycleRepeat();
     if (playerGetShuffle() != s->shuffle) playerToggleShuffle();
 }
 
 void settingsCapture(Settings *s) {
+    s->theme = (u8)uiGetTheme();
+    s->showAlbumTiles = uiGetAlbumTiles();
     s->volume = playerGetVolume();
     s->repeat = playerGetRepeat();
     s->shuffle = playerGetShuffle();

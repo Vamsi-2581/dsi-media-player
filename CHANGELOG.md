@@ -66,8 +66,8 @@ First release. [Download](https://github.com/charlesmach/dsi-media-player/releas
 - Metadata preview on hover, with no audio interruption
 - Japanese text rendering via an embedded 8×8 bitmap font
 - Persistent settings (volume, repeat, shuffle, last directory) and
-  resume-on-launch, which restores the previous queue and playback position
-  (theme and the album-tiles toggle are not yet persisted)
+  resume-on-launch, which restores the previous queue and playback position,
+  plus the selected theme and album-tiles preference
 
 ### Fixed
 

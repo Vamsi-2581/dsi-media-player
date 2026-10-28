@@ -113,17 +113,25 @@ static const int sleepOptions[] = { 0, 15, 30, 45, 60, 90, 120 };
 #define SLEEP_OPTION_COUNT 7
 
 /* Theme / personalisation */
-typedef enum {
-    THEME_BLUE = 0,
-    THEME_PURPLE,
-    THEME_GREEN,
-    THEME_RED,
-    THEME_ORANGE,
-    THEME_COUNT
-} ThemeColor;
-
 static ThemeColor currentTheme = THEME_BLUE;
 static bool showAlbumTiles = true;
+
+void uiSetTheme(ThemeColor theme) {
+    if (theme >= THEME_BLUE && theme < THEME_COUNT)
+        currentTheme = theme;
+}
+
+ThemeColor uiGetTheme(void) {
+    return currentTheme;
+}
+
+void uiSetAlbumTiles(bool enabled) {
+    showAlbumTiles = enabled;
+}
+
+bool uiGetAlbumTiles(void) {
+    return showAlbumTiles;
+}
 
 static const char *themeNames[] = { "Blue", "Purple", "Green", "Red", "Orange" };
 

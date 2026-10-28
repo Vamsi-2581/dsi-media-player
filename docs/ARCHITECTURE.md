@@ -365,7 +365,7 @@ usable as a pocket player with the lid shut.
 
 | Path | Contents |
 |------|----------|
-| `/data/dsiplayer.cfg` | volume, repeat, shuffle, last path/directory, resume position |
+| `/data/dsiplayer.cfg` | volume, repeat, shuffle, theme, album-tile preference, last path/directory, resume position |
 | `/data/dsiplayer_resume.m3u` | queue snapshot for resume-on-launch |
 | `/data/dsiplayer_library.dat` | cached library index |
 | `/data/artcache/*.thm` | 64×64 cover art thumbnails |
@@ -375,7 +375,7 @@ Settings are written periodically from the main loop
 avoid hammering the SD card. Power loss can therefore lose the last few
 seconds of preference changes, which is an accepted tradeoff.
 
-**Not currently persisted:** the selected theme and the album-tiles toggle
-are file-statics in `ui_bottom.c` (`currentTheme`, `showAlbumTiles`) with no
-corresponding field in `Settings`, so both reset on every launch. Adding
-them is a small, self-contained change.
+The selected theme and album-tiles preference are owned by `ui_bottom.c`
+and exposed through small UI accessors. `Settings` reads and writes both in
+`/data/dsiplayer.cfg`; older config files retain the default blue theme and
+enabled album tiles.

@@ -90,11 +90,24 @@ typedef enum {
     TAB_COUNT
 } BottomTab;
 
+typedef enum {
+    THEME_BLUE = 0,
+    THEME_PURPLE,
+    THEME_GREEN,
+    THEME_RED,
+    THEME_ORANGE,
+    THEME_COUNT
+} ThemeColor;
+
 /* Theme accessors */
 u16 uiThemeAccent(void);
 u16 uiThemeAccentLight(void);
 u16 uiThemeProgressFg(void);
 u16 uiThemeIconActive(void);
+void uiSetTheme(ThemeColor theme);
+ThemeColor uiGetTheme(void);
+void uiSetAlbumTiles(bool enabled);
+bool uiGetAlbumTiles(void);
 
 /* Sleep timer */
 void uiSetSleepTimer(int minutes);

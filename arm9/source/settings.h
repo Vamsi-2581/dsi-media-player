@@ -11,6 +11,8 @@ typedef struct {
     u8         volume;
     RepeatMode repeat;
     bool       shuffle;
+    u8         theme;
+    bool       showAlbumTiles;
     char       lastPath[512];
     char       lastDir[512];
     u32        resumePositionMs;
