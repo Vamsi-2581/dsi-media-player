@@ -14,7 +14,7 @@ typedef uint32_t u32;
 
 /* Provide nds.h stubs and include decoder */
 #define _NDS_H_
-#include "arm9/source/ui/jpegthumb.c"
+#include "../arm9/source/ui/jpegthumb.c"
 
 int main(int argc, char **argv) {
     if (argc < 2) {

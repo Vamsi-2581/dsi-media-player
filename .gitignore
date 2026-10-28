@@ -17,3 +17,6 @@ Thumbs.db
 *.swp
 *~
 .vscode/
+
+# test_jpeg harness output
+*.ppm

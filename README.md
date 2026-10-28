@@ -43,6 +43,16 @@ MP3 uses the Helix fixed-point decoder rather than a float one, because the
 ARM9 has no FPU and software float emulation is too slow to keep the ring
 buffer fed.
 
+## Documentation
+
+| Document | What it covers |
+|----------|----------------|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How it works — memory layout, main loop, audio pipeline, rendering, library, cover art |
+| [docs/ADDING_A_DECODER.md](docs/ADDING_A_DECODER.md) | Walkthrough for wiring in a new audio format |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Dev setup, code style, build gotchas, testing, PR process |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [FEASIBILITY.md](FEASIBILITY.md) | Original feasibility study — hardware limits that shaped the design |
+
 ## Building
 
 ### Prerequisites
