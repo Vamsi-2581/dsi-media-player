@@ -1,0 +1,19 @@
+# Build output
+*.o
+*.d
+*.elf
+*.nds
+*.map
+build/
+arm7/build/
+arm9/build/
+
+# Fetched by setup.sh
+libs/dr_flac.h
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
