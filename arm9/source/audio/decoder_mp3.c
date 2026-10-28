@@ -278,6 +278,11 @@ static DecodeResult mp3Read(Decoder *dec, s16 *outBuf, u32 numSamples, u32 *samp
         /* Find next sync word */
         int offset = MP3FindSyncWord(ctx->inBuf + ctx->inBufReadOfs, available);
         if (offset < 0) {
+            /* Whole file consumed and no sync word left: what remains is a
+               trailing non-audio tag (ID3v1, Lyrics3, APE). refillBuffer
+               cannot advance here — it keeps returning the same buffered
+               bytes — so bailing is the only way out of this loop. */
+            if (ctx->fileOffset >= ctx->fileSize) break;
             if (refillBuffer(ctx, dec->file) == 0) break;
             continue;
         }

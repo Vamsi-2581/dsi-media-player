@@ -71,6 +71,10 @@ static DecodeResult wavOpen(Decoder *dec, const char *path) {
         if (fread(chunkId, 1, 4, f) != 4) break;
         u32 chunkSize = readU32LE(f);
 
+        /* fseek takes a signed long, so a chunkSize above LONG_MAX seeks
+           backwards and re-reads this same chunk forever. */
+        if (chunkSize > 0x7FFFFFFFu) break;
+
         if (memcmp(chunkId, "fmt ", 4) == 0) {
             u16 audioFmt = readU16LE(f);
             if (audioFmt != 1) { // PCM only
@@ -94,7 +98,9 @@ static DecodeResult wavOpen(Decoder *dec, const char *path) {
             foundFmt = true;
 
         } else if (memcmp(chunkId, "data", 4) == 0) {
-            if (!foundFmt) { free(ctx); fclose(f); return DECODE_ERROR; }
+            if (!foundFmt || ctx->blockAlign == 0) {
+                free(ctx); fclose(f); return DECODE_ERROR;
+            }
             ctx->dataOffset = ftell(f);
             ctx->dataSize = chunkSize;
             dec->info.totalSamples = chunkSize / ctx->blockAlign;
@@ -104,8 +110,9 @@ static DecodeResult wavOpen(Decoder *dec, const char *path) {
             foundData = true;
 
         } else if (memcmp(chunkId, "LIST", 4) == 0) {
+            if (chunkSize < 4) break;   /* chunkSize - 4 would underflow */
             u8 listType[4];
-            fread(listType, 1, 4, f);
+            if (fread(listType, 1, 4, f) != 4) break;
             if (memcmp(listType, "INFO", 4) == 0) {
                 parseInfoChunk(dec, f, chunkSize - 4);
             } else {

@@ -163,6 +163,16 @@ static DecodeResult flacOpen(Decoder *dec, const char *path) {
         return DECODE_ERROR;
     }
 
+    /* The shared decode buffer is sized for stereo (DECODE_CHUNK * 2), but
+       dr_flac writes frames * channels. More than 2 channels would run off
+       the end of it, so refuse the file rather than corrupt memory. */
+    if (flac->channels == 0 || flac->channels > 2) {
+        free(ctx);
+        drflac_close(flac);
+        fclose(f);
+        return DECODE_UNSUPPORTED;
+    }
+
     ctx->flac = flac;
     ctx->currentSample = 0;
 
